@@ -17,19 +17,34 @@ namespace Controller
 
         private void Awake()
         {
-            CreateLevel();
+            _levelModel = new LevelModel(settings);
+            _levelModel.GenerateLevel();
             _playerView = Instantiate(playerPrefab);
             levelView.Connect(_levelModel);
-            GroundView groundView = levelView.GetGroundView(_levelModel.SpawnPoint);
-            _playerView.Connect(_levelModel, levelView);
-            _playerView.Wrap(groundView);
-            _playerView.SetSpeed(settings.playerSpeed);
-            cameraController.SetTarget(_playerView.transform);
+            _playerView.Connect(_levelModel, levelView, settings.playerSpeed);
+            cameraController.Connect(_playerView.transform, _levelModel);
         }
 
-        private void CreateLevel()
+        private void Update()
         {
-            _levelModel = new LevelModel(settings);
+            if (Input.GetMouseButtonDown(0))
+            {
+                OnMouseClick();
+            }
         }
+
+        private void OnMouseClick()
+        {
+            if (_levelModel.State == LevelState.Paused)
+            {
+                _levelModel.StartLevel();
+            }
+
+            if (_levelModel.State == LevelState.Finish)
+            {
+                _levelModel.GenerateLevel();
+            }
+        }
+        
     }
 }

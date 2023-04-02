@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using Controller;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -11,19 +9,27 @@ namespace Data
         public int Width => _grounds.GetLength(0);
         public int Height => _grounds.GetLength(1);
         public Vector2 SpawnPoint => _spawnPoint;
+        public Vector2 PlayerPoint => _playerPoint;
+        public LevelState State => _levelState;
         
         private const int _PLATFORM_SIZE = 3;
         private const int _PLATFORM_HEIGHT = 3;
+        private const int _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT = 40;
+        public const int MOVE_LEVEL_DOWN_HEIGHT = -10;
 
         private Ground[,] _grounds;
         private readonly Settings _settings;
-        private readonly int _thickness = 1;
-        private readonly Vector2 _spawnPoint;
+        private int _thickness;
+        private Vector2 _spawnPoint;
+        private Vector2 _playerPoint;
         private int _currentX;
         private int _currentY;
+        private LineDirection _currentLineDirection;
+        private LevelState _levelState = LevelState.Paused;
 
         public event Action OnGroundChanged;
         public event Action<Vector2> OnNewGroundsGenerated;
+        public event Action<LevelState> OnLevelStateChange;
         
         public Ground GetGround(int x, int j)
         {
@@ -33,12 +39,29 @@ namespace Data
         public LevelModel(Settings settings)
         {
             _settings = settings;
+        }
+        
+        public void GenerateLevel()
+        {
             _grounds = new Ground[(int)_settings.levelSize.x, (int)_settings.levelSize.y];
-            _thickness = GetThicknessByDifficulty(settings.difficulty);
+            _thickness = GetThicknessByDifficulty(_settings.difficulty);
             int xStart = Width / 2 - _PLATFORM_SIZE / 2 + 1;
             DrawLine(xStart, _PLATFORM_HEIGHT, _PLATFORM_SIZE, _PLATFORM_SIZE, LineDirection.Right);
             _spawnPoint = new Vector2(xStart, _PLATFORM_HEIGHT + 2);
-            (_currentX, _currentY) = GenerateLines(xStart, _PLATFORM_HEIGHT, _thickness, LineDirection.Right);
+            (_currentX, _currentY, _currentLineDirection) = GenerateLines(xStart, _PLATFORM_HEIGHT + 2, _thickness, LineDirection.Right);
+            SetState(LevelState.Paused);
+            _playerPoint = SpawnPoint;
+        }
+
+        public void StartLevel()
+        {
+            SetState(LevelState.Playing);
+        }
+
+        private void SetState(LevelState levelState)
+        {
+            _levelState = levelState;
+            OnLevelStateChange?.Invoke(_levelState);
         }
 
         private int GetThicknessByDifficulty(Difficulty settingsDifficulty)
@@ -56,7 +79,14 @@ namespace Data
             return 1;
         }
 
-        private (int, int) GenerateLines(int x, int y, int thickness, LineDirection startDirection)
+        public static LineDirection GetOtherDirection(LineDirection direction)
+        {
+            return  direction == LineDirection.Left ? 
+                LineDirection.Right : 
+                LineDirection.Left;
+        }
+
+        private (int, int, LineDirection) GenerateLines(int x, int y, int thickness, LineDirection startDirection)
         {
             int currentX = x;
             int currentY = y;
@@ -67,47 +97,15 @@ namespace Data
             
             LineDirection currentDirection = startDirection;
 
-            for (int yg = currentY + thickness; yg < Height; yg++)
-            {
-                for (int xg = 0; xg < Width; xg++)
-                {
-                    _grounds[xg, yg].floor = false;
-                }
-            }
-
-            while (currentY + currentWidth + 1 < Height)
+            while (currentY + currentWidth + thickness + 5< Height)
             {
                 currentWidth = Random.Range(minWidth, maxWidth);
-                
-                if (currentX + thickness + currentWidth > Width * 2)
-                {
-                    currentDirection = LineDirection.Left;
-                    currentWidth = minWidth;
-                }
-                
-                else if (currentX * 2 - thickness - currentWidth < 0)
-                {
-                    currentDirection = LineDirection.Right;
-                    if (_thickness == 3)
-                    {
-                        currentY--;
-                    }
-                    currentWidth = minWidth;
-                }
-
-                else
-                {
-                    currentDirection = 
-                        currentDirection == LineDirection.Left ? 
-                            LineDirection.Right : 
-                            LineDirection.Left;
-                }
-                
                 (currentX, currentY) = DrawLine(currentX, currentY, currentWidth, thickness, currentDirection);
+                currentDirection = GetOtherDirection(currentDirection);
             }
 
             OnGroundChanged?.Invoke();
-            return (currentX, currentY);
+            return (currentX, currentY, currentDirection);
 
         }
 
@@ -134,9 +132,7 @@ namespace Data
                 stepX++;
             }
 
-            int adjustmentY = thickness == 1 ? 0 : thickness;
-            
-            return (currentX, currentY - adjustmentY);
+            return (currentX, currentY);
         }
 
         private (int, int)  DrawLine(int x, int y, int length)
@@ -169,37 +165,50 @@ namespace Data
 
         }
 
-        enum LineDirection
-        {
-            Left,
-            Right
-        }
-
-        private Vector2 _playerPoint;
         public void SetPlayerGround(Vector2 groundViewPoint)
         {
+            if (_levelState != LevelState.Playing)
+            {
+                return;
+            }
+            
             Ground ground = _grounds[(int)groundViewPoint.x, (int)groundViewPoint.y];
             _playerPoint = groundViewPoint;
-            Debug.Log(_playerPoint);
 
             if (ground.floor == false)
             {
-                // Debug.LogError("Loose!");
+                _playerPoint = _spawnPoint;
+                SetState(LevelState.Finish);
             }
             
-            if (groundViewPoint.y < 32)
+            if (groundViewPoint.y < _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT)
             {
                 return;
             }
 
-            GenerateNext();
+            MoveLevelDown(MOVE_LEVEL_DOWN_HEIGHT);
         }
 
         public void MoveLevelDown(int height)
         {
             _grounds = RotateArray(_grounds, height);
             _currentY += height;
-            (_currentX, _currentY) = GenerateLines(_currentX, _currentY, _thickness, LineDirection.Right);
+            
+            for (int yg = _currentY; yg < Height; yg++)
+            {
+                for (int xg = 0; xg < Width; xg++)
+                {
+                    _grounds[xg, yg] = default;
+                }
+            }
+            
+            _currentLineDirection = GetOtherDirection(_currentLineDirection);
+            
+            (_currentX, _currentY, _currentLineDirection) = 
+                GenerateLines(_currentX, _currentY, _thickness, LineDirection.Right);
+            
+            _playerPoint = new Vector2(_playerPoint.x, _playerPoint.y + height);
+            OnNewGroundsGenerated?.Invoke(_playerPoint);
             OnGroundChanged?.Invoke();
         }
 
@@ -207,7 +216,7 @@ namespace Data
         {
             int height = array.GetLength(1);
             int width = array.GetLength(0);
-            
+
             shift %= height;
             shift = shift < 0 ? height - Math.Abs(shift) : shift;
 
@@ -215,34 +224,11 @@ namespace Data
 
             for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
-                result[x, (y + shift) % height] = array[x, y];
-
-            return result;
-        }
-
-        private void GenerateNext()
-        {
-            int backwardHeight = 10;
-            int deadLine = (int)_playerPoint.y - backwardHeight;
-            
-            
-            int deltaY = 0;
-
-            for (int y = deadLine; y < Height; y++)
             {
-                for (int x = 0; x < Width; x++)
-                {
-                    _grounds[x, deltaY] = _grounds[x, y];
-                }
-
-                deltaY++;
+                result[x, (y + shift) % height] = array[x, y];
             }
 
-            _currentY -= deltaY;
-            _playerPoint = new Vector2(_playerPoint.x, 0);
-            //OnGroundChanged?.Invoke();
-            //GenerateLines(_currentX, _currentY, _thickness, LineDirection.Right);
-            OnNewGroundsGenerated?.Invoke(_playerPoint);
+            return result;
         }
     }
 }

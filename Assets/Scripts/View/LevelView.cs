@@ -14,17 +14,7 @@ namespace View
         private LevelModel _levelModel;
         private float _halfDiagonal;
 
-        public int levelDown;
-        public bool set;
-
-        private void Update()
-        {
-            if (set)
-            {
-                set = false;
-                _levelModel.MoveLevelDown(levelDown);
-            }
-        }
+        private const float _FALLING_OFFSET = 5f;
 
         public void Connect(LevelModel model)
         {
@@ -76,7 +66,7 @@ namespace View
                 for (int i = 0; i < _levelModel.Width; i++)
                 {
                     _groundViews[i, j].point = new Vector2(i, j);
-                    _groundViews[i, j].Set(_levelModel.GetGround(i, j));
+                    _groundViews[i, j].Set(_levelModel.GetGround(i, j), NeedFalling(j) == false);
                 }
             }
         }
@@ -91,6 +81,32 @@ namespace View
             foreach (var view in _groundViews)
             {
                 Destroy(view.gameObject);
+            }
+        }
+
+        private bool NeedFalling(float y)
+        {
+            return y + _FALLING_OFFSET < _levelModel.PlayerPoint.y;
+        }
+
+        private void Update()
+        {
+            if (_levelModel.State != LevelState.Playing)
+            {
+                return;
+            }
+            
+            for (int y = 0; y < _levelModel.Height; y++)
+            {
+                if (NeedFalling(y) == false)
+                {
+                    continue;
+                }
+                
+                for (int x = 0; x < _levelModel.Width; x++)
+                {
+                    _groundViews[x, y].StartFalling();
+                }
             }
         }
     }
