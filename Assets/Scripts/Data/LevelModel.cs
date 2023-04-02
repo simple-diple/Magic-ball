@@ -16,8 +16,11 @@ namespace Data
         private const int _PLATFORM_SIZE = 3;
         private const int _PLATFORM_HEIGHT = 10;
         private const int _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT = 40;
-        public const int MOVE_LEVEL_DOWN_HEIGHT = -20;
+        public const int MOVE_LEVEL_DOWN_HEIGHT = 30;
         private const int _DIAMONDS_GROUND_CANDIDATES = 5;
+        private const int _GENERATE_SAVE_BORDER_R = -3;
+        private const int _GENERATE_SAVE_BORDER_L = -1;
+        private const byte _DIAMOND_SCORE = 1;
 
         public int Score
         {
@@ -47,9 +50,9 @@ namespace Data
 
         public event Action<int> OnScoreChange;
 
-        public Ground GetGround(int x, int j)
+        public Ground GetGround(int x, int y)
         {
-            return _grounds[x, j];
+            return _grounds[x, y];
         }
 
         public LevelModel(Settings settings)
@@ -64,9 +67,7 @@ namespace Data
             for (var y = 0; y < Height; y++)
             for (var x = 0; x < Width; x++)
             {
-                var ground = _grounds[x, y];
-                ground.point = new Vector2(x, y);
-                _grounds[x, y] = ground;
+                _grounds[x, y].point = new Vector2(x, y);;
             }
 
             _thickness = GetThicknessByDifficulty(_settings.difficulty);
@@ -119,14 +120,17 @@ namespace Data
             int currentX = x;
             int currentY = y;
 
-            int minWidth = 5;
-            int maxWidth = Width;
+            int minWidth = thickness + 1;
             int currentWidth = 0;
             
             LineDirection currentDirection = startDirection;
 
-            while (currentY + currentWidth + thickness + 5< Height)
+            while (currentY + currentWidth * 2 < Height)
             {
+                var maxWidth = currentDirection == LineDirection.Right
+                    ? Width * 2 - currentX * 2 + _GENERATE_SAVE_BORDER_R
+                    : currentX * 2 + _GENERATE_SAVE_BORDER_L;
+                maxWidth -= thickness / 2;
                 currentWidth = Random.Range(minWidth, maxWidth);
                 (currentX, currentY) = DrawLine(currentX, currentY, currentWidth, thickness, currentDirection);
                 currentDirection = GetOtherDirection(currentDirection);
@@ -160,6 +164,16 @@ namespace Data
                 stepX++;
             }
 
+            switch (thickness)
+            {
+                case 2:
+                    currentY -= 2;
+                    break;
+                case 3:
+                    currentY -= 3;
+                    break;
+            }
+
             return (currentX, currentY);
         }
         
@@ -176,15 +190,11 @@ namespace Data
             {
                 case DiamondsOrder.Random:
                     var random = _groundsDiamondCandidates[Random.Range(0, _DIAMONDS_GROUND_CANDIDATES)];
-                    Ground candidate = _grounds[(int)random.x, (int)random.y];
-                    candidate.diamond = new Diamond(1);
-                    _grounds[(int)point.x, (int)point.y] = candidate;
+                    _grounds[(int)random.x, (int)random.y].diamond = true;
                     break;
                 case DiamondsOrder.InOrder:
                     var first = _groundsDiamondCandidates[0];
-                    Ground firstGround = _grounds[(int)first.x, (int)first.y];
-                    firstGround.diamond = new Diamond(1);
-                    _grounds[(int)point.x, (int)point.y] = firstGround;
+                    _grounds[(int)first.x, (int)first.y].diamond = true;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -208,11 +218,8 @@ namespace Data
 
                 currentX = Mathf.Clamp(currentX, 0, Width - 1);
                 currentY = Mathf.Clamp(currentY, 0, Height - 1);
-
-                Ground ground = _grounds[currentX, currentY];
-                ground.floor = true;
-                _grounds[currentX, currentY] = ground;
                 
+                _grounds[currentX, currentY].floor = true;
                 AddDiamondCandidate(new Vector2(currentX, currentY));
 
                 if (stepX % 2 == 0)
@@ -252,43 +259,38 @@ namespace Data
 
         private void MoveLevelDown(int height)
         {
-            _grounds = RotateArray(_grounds, height);
-            _currentY += height;
-            
-            for (int yg = _currentY; yg < Height; yg++)
-            {
-                for (int xg = 0; xg < Width; xg++)
-                {
-                    _grounds[xg, yg] = default;
-                }
-            }
-            
+            _grounds = MoveArray(_grounds, height);
+            _currentY -= height;
+
             _currentLineDirection = GetOtherDirection(_currentLineDirection);
             
             (_currentX, _currentY, _currentLineDirection) = 
                 GenerateLines(_currentX, _currentY, _thickness, LineDirection.Right);
             
-            _playerPoint = new Vector2(_playerPoint.x, _playerPoint.y + height);
+            _playerPoint = new Vector2(_playerPoint.x, _playerPoint.y - height);
             OnNewGroundsGenerated?.Invoke(_playerPoint);
             OnGroundChanged?.Invoke();
         }
 
-        private static Ground[,] RotateArray(Ground[,] array, int shift)
+        private static Ground[,] MoveArray(Ground[,] array, int shift)
         {
             int height = array.GetLength(1);
             int width = array.GetLength(0);
-
-            shift %= height;
-            shift = shift < 0 ? height - Math.Abs(shift) : shift;
 
             Ground[,] result = new Ground[width, height];
 
             for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
             {
-                var newY = (y + shift) % height;
-                result[x, newY] = array[x, y];
-                result[x, newY].point = new Vector2(x, newY);
+                var newY = y + shift;
+
+                if (newY >= height)
+                {
+                    break;
+                }
+                
+                result[x, y] = array[x, newY];
+                result[x, y].point = new Vector2(x, y);
             }
 
             return result;
@@ -296,19 +298,14 @@ namespace Data
 
         public void TakeDiamond()
         {
-            Ground ground = _grounds[(int)_playerPoint.x, (int)_playerPoint.y];
-            Diamond diamond = ground.diamond;
-            if (diamond != null)
+            if (_grounds[(int)_playerPoint.x, (int)_playerPoint.y].diamond == false)
             {
-                diamond.Take();
-                Score += diamond.score;
+                Debug.LogError("Trying to get empty diamond!");
+                return;
             }
-
-            ground.diamond = diamond;
-            _grounds[(int)_playerPoint.x, (int)_playerPoint.y] = ground;
-
+            
+            _grounds[(int)_playerPoint.x, (int)_playerPoint.y].diamond = false;
+            Score += _DIAMOND_SCORE;
         }
-        
-       
     }
 }

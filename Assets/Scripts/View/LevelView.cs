@@ -66,8 +66,7 @@ namespace View
             {
                 for (int i = 0; i < _levelModel.Width; i++)
                 {
-                    Ground ground = _levelModel.GetGround(i, j);
-                    _groundViews[i, j].Set(ground, _levelModel);
+                    _groundViews[i, j].Set(i, j, _levelModel);
                 }
             }
         }

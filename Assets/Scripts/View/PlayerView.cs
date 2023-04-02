@@ -97,14 +97,14 @@ namespace View
         private void PlayDieEffect()
         {
             body.isKinematic = false;
-            body.AddForce(transform.forward * 1f, ForceMode.Impulse);
+            body.AddForce(transform.forward * _speed, ForceMode.Impulse);
         }
 
         private void OnNewGroundsGenerated(Vector2 playerPoint)
         {
             var playerTransform = transform;
             var position = playerTransform.position;
-            float z = position.z - LevelModel.MOVE_LEVEL_DOWN_HEIGHT * _levelView.GroundHalfDiagonal;
+            float z = position.z + LevelModel.MOVE_LEVEL_DOWN_HEIGHT * _levelView.GroundHalfDiagonal;
             position = new Vector3(position.x, position.y, z);
             playerTransform.position = position;
         }

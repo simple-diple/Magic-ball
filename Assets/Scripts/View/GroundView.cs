@@ -16,20 +16,19 @@ namespace View
         private float? _defaultPositionZ;
         private Coroutine _fallingCoroutine;
         private Ground _ground;
-        
 
         private void SetFloor(bool hasFloor)
         {
             render.enabled = hasFloor;
         }
 
-        public void Set(Ground ground, LevelModel levelModel)
+        public void Set(int x, int y, LevelModel levelModel)
         {
-            _ground = ground;
+            _ground = levelModel.GetGround(x, y);
             _defaultPositionZ ??= transform.position.z;
             StopFalling();
-            SetFloor(ground.floor);
-            diamondView.Connect(ground, levelModel);
+            SetFloor(_ground.floor);
+            diamondView.Connect(_ground.diamond, levelModel);
         }
 
         private void StopFalling()

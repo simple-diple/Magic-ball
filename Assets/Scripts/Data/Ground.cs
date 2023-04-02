@@ -5,7 +5,7 @@ namespace Data
     public struct Ground
     {
         public bool floor;
-        public Diamond diamond;
+        public bool diamond;
         public Vector2 point;
     }
 }
