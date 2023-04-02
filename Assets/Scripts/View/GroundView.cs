@@ -7,46 +7,28 @@ namespace View
     public class GroundView : MonoBehaviour
     {
         [SerializeField] private Renderer render;
+        [SerializeField] private DiamondView diamondView;
         public Vector2 point;
 
         private const float _FALL_DOWN_POSITION = 60;
-        private const float _FALL_DOWN_SPEED = 2;
-        private Color _defaultColor;
+        private const float _FALL_DOWN_SPEED = 4;
         private float? _defaultPositionZ;
         private Coroutine _fallingCoroutine;
-
-        private void Awake()
-        {
-            _defaultColor = render.material.color;
-        }
+        
 
         private void SetFloor(bool hasFloor)
         {
             render.enabled = hasFloor;
-            //render.material.color = hasFloor ? defaultColor : Color.white;
         }
 
-        public void Set(Ground ground, bool stopFalling)
+        public void Set(Ground ground, LevelModel levelModel)
         {
             _defaultPositionZ ??= transform.position.z;
-            if (stopFalling)
-            {
-                StopFalling();
-            }
+            StopFalling();
             SetFloor(ground.floor);
-            SetTest(ground.test);
+            diamondView.Connect(ground, levelModel);
         }
 
-        private void SetTest(bool groundTest)
-        {
-            if (groundTest == false)
-            {
-                return;
-            }
-            
-            render.enabled = true;
-            render.material.color = Color.yellow;
-        }
 
         private void StopFalling()
         {

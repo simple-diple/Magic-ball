@@ -59,7 +59,17 @@ namespace View
         private void OnTriggerEnter(Collider other)
         {
             GroundView groundView = other.gameObject.GetComponent<GroundView>();
-            _levelModel.SetPlayerGround(groundView.point);
+            if (groundView)
+            {
+                _levelModel.SetPlayerGround(groundView.point);
+            }
+            
+            DiamondView diamondView = other.gameObject.GetComponent<DiamondView>();
+            if (diamondView)
+            {
+                diamondView.Take();
+            }
+            
         }
 
         public void Connect(LevelModel levelModel, LevelView levelView, float speed)

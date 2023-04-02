@@ -3,7 +3,6 @@ namespace Data
     public struct Ground
     {
         public bool floor;
-        public Diamond? diamond;
-        public bool test;
+        public Diamond diamond;
     }
 }
