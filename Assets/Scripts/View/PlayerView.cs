@@ -51,17 +51,12 @@ namespace View
             playerTransform.rotation = rotation;
         }
 
-        private void SetAngle(LineDirection direction)
-        {
-            
-        }
-
         private void OnTriggerEnter(Collider other)
         {
             GroundView groundView = other.gameObject.GetComponent<GroundView>();
             if (groundView)
             {
-                _levelModel.SetPlayerGround(groundView.point);
+                _levelModel.SetPlayerGround(groundView.Ground);
             }
             
             DiamondView diamondView = other.gameObject.GetComponent<DiamondView>();

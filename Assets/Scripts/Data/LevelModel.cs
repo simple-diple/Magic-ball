@@ -17,7 +17,7 @@ namespace Data
         private const int _PLATFORM_HEIGHT = 10;
         private const int _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT = 40;
         public const int MOVE_LEVEL_DOWN_HEIGHT = -20;
-        public const int DIAMONDS_GROUND_CANDIDATES = 5;
+        private const int _DIAMONDS_GROUND_CANDIDATES = 5;
 
         public int Score
         {
@@ -39,7 +39,7 @@ namespace Data
         private int _currentY;
         private LineDirection _currentLineDirection;
         private LevelState _levelState = LevelState.Paused;
-        private readonly List<Vector2> _groundsDiamondCandidates = new List<Vector2>(DIAMONDS_GROUND_CANDIDATES);
+        private readonly List<Vector2> _groundsDiamondCandidates = new List<Vector2>(_DIAMONDS_GROUND_CANDIDATES);
 
         public event Action OnGroundChanged;
         public event Action<Vector2> OnNewGroundsGenerated;
@@ -56,15 +56,25 @@ namespace Data
         {
             _settings = settings;
         }
-        
+
         public void GenerateLevel()
         {
             _grounds = new Ground[(int)_settings.levelSize.x, (int)_settings.levelSize.y];
+
+            for (var y = 0; y < Height; y++)
+            for (var x = 0; x < Width; x++)
+            {
+                var ground = _grounds[x, y];
+                ground.point = new Vector2(x, y);
+                _grounds[x, y] = ground;
+            }
+
             _thickness = GetThicknessByDifficulty(_settings.difficulty);
             int xStart = Width / 2 - _PLATFORM_SIZE / 2 + 1;
             DrawLine(xStart, _PLATFORM_HEIGHT, _PLATFORM_SIZE, _PLATFORM_SIZE, LineDirection.Right);
             _spawnPoint = new Vector2(xStart, _PLATFORM_HEIGHT + 2);
-            (_currentX, _currentY, _currentLineDirection) = GenerateLines(xStart, _PLATFORM_HEIGHT + 2, _thickness, LineDirection.Right);
+            (_currentX, _currentY, _currentLineDirection) =
+                GenerateLines(xStart, _PLATFORM_HEIGHT + 2, _thickness, LineDirection.Right);
             SetState(LevelState.Paused);
             _playerPoint = SpawnPoint;
             _groundsDiamondCandidates.Clear();
@@ -157,7 +167,7 @@ namespace Data
         {
             _groundsDiamondCandidates.Add(point);
             
-            if (_groundsDiamondCandidates.Count != DIAMONDS_GROUND_CANDIDATES)
+            if (_groundsDiamondCandidates.Count != _DIAMONDS_GROUND_CANDIDATES)
             {
                 return;
             }
@@ -165,7 +175,7 @@ namespace Data
             switch (_settings.diamondsOrder)
             {
                 case DiamondsOrder.Random:
-                    var random = _groundsDiamondCandidates[Random.Range(0, DIAMONDS_GROUND_CANDIDATES)];
+                    var random = _groundsDiamondCandidates[Random.Range(0, _DIAMONDS_GROUND_CANDIDATES)];
                     Ground candidate = _grounds[(int)random.x, (int)random.y];
                     candidate.diamond = new Diamond(1);
                     _grounds[(int)point.x, (int)point.y] = candidate;
@@ -217,15 +227,14 @@ namespace Data
 
         }
 
-        public void SetPlayerGround(Vector2 groundViewPoint)
+        public void SetPlayerGround(Ground ground)
         {
             if (_levelState != LevelState.Playing)
             {
                 return;
             }
-            
-            Ground ground = _grounds[(int)groundViewPoint.x, (int)groundViewPoint.y];
-            _playerPoint = groundViewPoint;
+
+            _playerPoint = ground.point;
 
             if (ground.floor == false)
             {
@@ -233,7 +242,7 @@ namespace Data
                 SetState(LevelState.Finish);
             }
             
-            if (groundViewPoint.y < _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT)
+            if (ground.point.y < _GENERATE_LEVEL_TRIGGER_PLAYER_HEIGHT)
             {
                 return;
             }
@@ -279,6 +288,7 @@ namespace Data
             {
                 var newY = (y + shift) % height;
                 result[x, newY] = array[x, y];
+                result[x, newY].point = new Vector2(x, newY);
             }
 
             return result;

@@ -23,6 +23,7 @@ namespace View
             _levelModel.OnGroundChanged -= OnGroundChanged;
             _levelModel.OnGroundChanged += OnGroundChanged;
             _groundViews = new GroundView[model.Width, model.Height];
+            
             Vector3 center = Vector3.zero;
             Vector3 firstGround = new Vector3(center.x + (float)model.Width / 2, center.y,
                 center.y + (float)model.Height / 2);
@@ -65,7 +66,6 @@ namespace View
             {
                 for (int i = 0; i < _levelModel.Width; i++)
                 {
-                    _groundViews[i, j].point = new Vector2(i, j);
                     Ground ground = _levelModel.GetGround(i, j);
                     _groundViews[i, j].Set(ground, _levelModel);
                 }

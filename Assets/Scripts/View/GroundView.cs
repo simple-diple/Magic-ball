@@ -8,12 +8,14 @@ namespace View
     {
         [SerializeField] private Renderer render;
         [SerializeField] private DiamondView diamondView;
-        public Vector2 point;
+
+        public Ground Ground => _ground;
 
         private const float _FALL_DOWN_POSITION = 60;
         private const float _FALL_DOWN_SPEED = 4;
         private float? _defaultPositionZ;
         private Coroutine _fallingCoroutine;
+        private Ground _ground;
         
 
         private void SetFloor(bool hasFloor)
@@ -23,12 +25,12 @@ namespace View
 
         public void Set(Ground ground, LevelModel levelModel)
         {
+            _ground = ground;
             _defaultPositionZ ??= transform.position.z;
             StopFalling();
             SetFloor(ground.floor);
             diamondView.Connect(ground, levelModel);
         }
-
 
         private void StopFalling()
         {
@@ -36,12 +38,11 @@ namespace View
             {
                 StopCoroutine(_fallingCoroutine);
                 _fallingCoroutine = null;
+                var groundTransform = transform;
+                var position = groundTransform.position;
+                position = new Vector3(position.x, position.y, _defaultPositionZ.Value);
+                groundTransform.position = position;
             }
-            
-            var groundTransform = transform;
-            var position = groundTransform.position;
-            position = new Vector3(position.x, position.y, _defaultPositionZ.Value);
-            groundTransform.position = position;
         }
 
         public void StartFalling()
