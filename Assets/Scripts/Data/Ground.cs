@@ -4,7 +4,6 @@ namespace Data
     {
         public bool floor;
         public Diamond? diamond;
-        public bool first;
-        public bool temp;
+        public bool test;
     }
 }

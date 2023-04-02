@@ -1,3 +1,4 @@
+using System;
 using Data;
 using UnityEngine;
 
@@ -5,26 +6,37 @@ namespace View
 {
     public class GroundView : MonoBehaviour
     {
-        [SerializeField] private Renderer renderer;
-
-        //ToDo remove me!
+        [SerializeField] private Renderer render;
         public Vector2 point;
+
+        private Color defaultColor;
+
+        private void Awake()
+        {
+            defaultColor = render.material.color;
+        }
+
         private void SetFloor(bool hasFloor)
         {
-            renderer.material.color = hasFloor ? Color.magenta : Color.white;
+            render.enabled = hasFloor;
+            render.material.color = defaultColor;
         }
 
         public void Set(Ground ground)
         {
             SetFloor(ground.floor);
+            SetTest(ground.test);
+        }
 
-            if (ground.floor)
+        private void SetTest(bool groundTest)
+        {
+            if (groundTest == false)
             {
-                renderer.material.color = ground.first ? Color.red : Color.magenta;
-                
-                if (ground.temp)
-                    renderer.material.color = Color.yellow;
+                return;
             }
+            
+            render.enabled = true;
+            render.material.color = Color.yellow;
         }
     }
 }

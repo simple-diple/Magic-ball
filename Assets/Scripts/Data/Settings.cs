@@ -8,5 +8,6 @@ namespace Data
         public Difficulty difficulty;
         public DiamondsOrder diamondsOrder;
         public Vector2 levelSize;
+        public float playerSpeed = 1;
     }
 }
