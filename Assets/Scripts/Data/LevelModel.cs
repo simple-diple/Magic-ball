@@ -7,7 +7,7 @@ namespace Data
     {
         public int Width => _grounds.GetLength(0);
         public int Height => _grounds.GetLength(1);
-        public Vector2 SpawnPoint => _spawnPoint;
+        public Vector2 SpawnPoint => _levelGenerator.GetSpawnPoint();
         public Vector2 PlayerPoint => _playerPoint;
         public LevelState State => _levelState;
         public event Action OnGroundChanged;
@@ -34,7 +34,6 @@ namespace Data
         private Ground[,] _grounds;
         private int _score;
         private int _thickness;
-        private Vector2 _spawnPoint;
         private Vector2 _playerPoint;
         private int _currentX;
         private int _currentY;
@@ -62,9 +61,7 @@ namespace Data
                     height: (int)_settings.levelSize.y, 
                     _thickness, 
                     _settings.diamondsOrder);
-            
-            _spawnPoint = _levelGenerator.GetSpawnPoint();
-           
+
             SetState(LevelState.Paused);
             _playerPoint = SpawnPoint;
             Score = 0;
@@ -94,7 +91,7 @@ namespace Data
 
             if (ground.floor == false)
             {
-                _playerPoint = _spawnPoint;
+                _playerPoint = _levelGenerator.GetSpawnPoint();;
                 SetState(LevelState.Finish);
             }
             

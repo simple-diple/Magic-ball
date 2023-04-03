@@ -10,13 +10,14 @@ namespace View
         [SerializeField] private DiamondView diamondView;
 
         public Ground Ground => _levelModel.GetGround(_point);
+        public Vector3 Position => _defaultPosition ?? Vector3.zero;
 
         private const float _FALL_DOWN_POSITION = 60;
         private const float _FALL_DOWN_SPEED = 4;
-        private float? _defaultPositionZ;
         private Coroutine _fallingCoroutine;
         private Vector2 _point;
         private LevelModel _levelModel;
+        private Vector3? _defaultPosition;
 
         private void SetFloor(bool hasFloor)
         {
@@ -27,7 +28,7 @@ namespace View
         {
             _point = point;
             _levelModel = levelModel;
-            _defaultPositionZ ??= transform.position.z;
+            _defaultPosition ??= transform.position;
             _levelModel.OnGroundChanged -= OnGroundChanged;
             _levelModel.OnGroundChanged += OnGroundChanged;
             UpdateData();
@@ -54,7 +55,7 @@ namespace View
             }
             var groundTransform = transform;
             var position = groundTransform.position;
-            position = new Vector3(position.x, position.y, _defaultPositionZ.Value);
+            position = new Vector3(position.x, position.y, _defaultPosition.Value.z);
             groundTransform.position = position;
 
         }
@@ -77,7 +78,10 @@ namespace View
         private IEnumerator FallDown()
         {
             float deltaZ = transform.position.z;
-            while (transform.position.z < _FALL_DOWN_POSITION && Ground.point.y < _levelModel.PlayerPoint.y)
+            
+            while ((transform.position.z < _FALL_DOWN_POSITION && 
+                   Ground.point.y < _levelModel.PlayerPoint.y) || 
+                   _levelModel.State != LevelState.Playing)
             {
                 deltaZ += _FALL_DOWN_SPEED * Time.deltaTime;
                 var groundTransform = transform;
@@ -87,7 +91,7 @@ namespace View
                 yield return null;
             }
 
-            if (Ground.point.y >= _levelModel.PlayerPoint.y)
+            if (_levelModel.State == LevelState.Playing && Ground.point.y >= _levelModel.PlayerPoint.y)
             {
                 StopFalling();
             }

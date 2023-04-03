@@ -32,7 +32,7 @@ namespace View
         {
             body.isKinematic = true;
             transform.position =
-                groundView.transform.position + Vector3.up * offsetY;
+                groundView.Position + Vector3.up * offsetY;
             RotatePlayer(LineDirection.Right);
         }
 
