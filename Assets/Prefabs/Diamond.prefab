@@ -96,8 +96,8 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 1
   m_Enabled: 1
-  m_Radius: 0.5
-  m_Height: 2
+  m_Radius: 0.94
+  m_Height: 2.47
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!108 &1343166236134578923
@@ -174,3 +174,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99a56189814347b28a31df4d87f464b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rend: {fileID: 8959072510485082549}
+  light: {fileID: 1343166236134578923}

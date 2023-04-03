@@ -296,16 +296,21 @@ namespace Data
             return result;
         }
 
-        public void TakeDiamond()
+        public bool TryTakeDiamond(Vector2 groundPoint)
         {
-            if (_grounds[(int)_playerPoint.x, (int)_playerPoint.y].diamond == false)
+            if (_grounds[(int)groundPoint.x, (int)groundPoint.y].diamond == false)
             {
-                Debug.LogError("Trying to get empty diamond!");
-                return;
+                return false;
             }
             
-            _grounds[(int)_playerPoint.x, (int)_playerPoint.y].diamond = false;
+            _grounds[(int)groundPoint.x, (int)groundPoint.y].diamond = false;
             Score += _DIAMOND_SCORE;
+            return true;
+        }
+
+        public Ground GetGround(Vector2 point)
+        {
+            return _grounds[(int)point.x, (int)point.y];
         }
     }
 }

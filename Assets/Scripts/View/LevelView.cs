@@ -1,4 +1,3 @@
-using System;
 using Data;
 using UnityEngine;
 
@@ -20,8 +19,6 @@ namespace View
         {
             Clear();
             _levelModel = model;
-            _levelModel.OnGroundChanged -= OnGroundChanged;
-            _levelModel.OnGroundChanged += OnGroundChanged;
             _groundViews = new GroundView[model.Width, model.Height];
             
             Vector3 center = Vector3.zero;
@@ -43,32 +40,16 @@ namespace View
                         z: firstGround.z - j * _halfDiagonal);
                     
                     _groundViews[i, j] = newGround;
+                    _groundViews[i, j].Connect(new Vector2(i, j), _levelModel);
                 }
                 currentDeltaX = j % 2 == 0 ? _halfDiagonal : 0;
             }
             
-            UpdateData();
         }
 
         public GroundView GetGroundView(Vector2 point)
         {
             return _groundViews[(int)point.x, (int)point.y];
-        }
-
-        private void OnGroundChanged()
-        {
-            UpdateData();
-        }
-
-        private void UpdateData()
-        {
-            for (int j = 0; j < _levelModel.Height; j++)
-            {
-                for (int i = 0; i < _levelModel.Width; i++)
-                {
-                    _groundViews[i, j].Set(i, j, _levelModel);
-                }
-            }
         }
 
         private void Clear()
@@ -89,14 +70,14 @@ namespace View
             return y + _FALLING_OFFSET < _levelModel.PlayerPoint.y;
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (_levelModel.State != LevelState.Playing)
             {
                 return;
             }
             
-            for (int y = 0; y < _levelModel.Height; y++)
+            for (int y = (int)_levelModel.PlayerPoint.y; y >= 0; y--)
             {
                 if (NeedFalling(y) == false)
                 {

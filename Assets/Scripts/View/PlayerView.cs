@@ -7,14 +7,14 @@ namespace View
     {
         [SerializeField] private float offsetY = 0.65f;
         [SerializeField] private Rigidbody body;
+        [SerializeField] private bool debug;
 
         private LevelModel _levelModel;
         private LevelView _levelView;
         private float _speed;
         private const float _ANGLE_FORWARD = 135;
         private LineDirection _currentDirection = LineDirection.Right;
-       
-        
+
 
         private void Wrap(GroundView groundView)
         {
@@ -57,6 +57,10 @@ namespace View
             if (groundView)
             {
                 _levelModel.SetPlayerGround(groundView.Ground);
+                if (debug)
+                {
+                    groundView.Debug();
+                }
             }
             
             DiamondView diamondView = other.gameObject.GetComponent<DiamondView>();
