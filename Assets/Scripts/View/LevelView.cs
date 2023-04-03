@@ -17,8 +17,35 @@ namespace View
 
         public void Connect(LevelModel model)
         {
-            Clear();
             _levelModel = model;
+
+            Clear();
+            CreateView(_levelModel);
+        }
+        
+        private void FixedUpdate()
+        {
+            if (_levelModel.State != LevelState.Playing)
+            {
+                return;
+            }
+            
+            for (int y = (int)_levelModel.PlayerPoint.y; y >= 0; y--)
+            {
+                if (NeedFalling(y) == false)
+                {
+                    continue;
+                }
+                
+                for (int x = 0; x < _levelModel.Width; x++)
+                {
+                    _groundViews[x, y].StartFalling();
+                }
+            }
+        }
+
+        private void CreateView(LevelModel model)
+        {
             _groundViews = new GroundView[model.Width, model.Height];
             
             Vector3 center = Vector3.zero;
@@ -44,7 +71,6 @@ namespace View
                 }
                 currentDeltaX = j % 2 == 0 ? _halfDiagonal : 0;
             }
-            
         }
 
         public GroundView GetGroundView(Vector2 point)
@@ -69,26 +95,6 @@ namespace View
         {
             return y + _FALLING_OFFSET < _levelModel.PlayerPoint.y;
         }
-
-        private void FixedUpdate()
-        {
-            if (_levelModel.State != LevelState.Playing)
-            {
-                return;
-            }
-            
-            for (int y = (int)_levelModel.PlayerPoint.y; y >= 0; y--)
-            {
-                if (NeedFalling(y) == false)
-                {
-                    continue;
-                }
-                
-                for (int x = 0; x < _levelModel.Width; x++)
-                {
-                    _groundViews[x, y].StartFalling();
-                }
-            }
-        }
+        
     }
 }

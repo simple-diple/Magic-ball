@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace View
 {
-    public class DiamondView : MonoBehaviour
+    public class DiamondView : MonoBehaviour, ICollectable
     {
         private LevelModel _levelModel;
         private GroundView _groundView;
@@ -15,7 +15,7 @@ namespace View
             gameObject.SetActive(ground.Ground is { floor: true, diamond: true });
         }
 
-        public void Take()
+        public void Collect()
         {
             if (_levelModel.TryTakeDiamond(_groundView.Ground.point))
             {

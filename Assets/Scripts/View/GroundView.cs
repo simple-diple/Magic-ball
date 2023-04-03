@@ -51,11 +51,12 @@ namespace View
             {
                 StopCoroutine(_fallingCoroutine);
                 _fallingCoroutine = null;
-                var groundTransform = transform;
-                var position = groundTransform.position;
-                position = new Vector3(position.x, position.y, _defaultPositionZ.Value);
-                groundTransform.position = position;
             }
+            var groundTransform = transform;
+            var position = groundTransform.position;
+            position = new Vector3(position.x, position.y, _defaultPositionZ.Value);
+            groundTransform.position = position;
+
         }
 
         public void StartFalling()
@@ -84,6 +85,11 @@ namespace View
                 position = new Vector3(position.x, position.y, deltaZ);
                 groundTransform.position = position;
                 yield return null;
+            }
+
+            if (Ground.point.y >= _levelModel.PlayerPoint.y)
+            {
+                StopFalling();
             }
         }
 

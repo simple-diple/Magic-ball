@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c75366ae3b514ef79badf8c2dbbf1908, type: 3}
   m_Name: Settings
   m_EditorClassIdentifier: 
-  difficulty: 1
-  diamondsOrder: 0
+  difficulty: 2
+  diamondsOrder: 1
   levelSize: {x: 10, y: 100}
-  playerSpeed: 4
+  playerSpeed: 3

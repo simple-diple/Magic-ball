@@ -3,7 +3,7 @@ using Data;
 using TMPro;
 using UnityEngine;
 
-namespace Controller
+namespace View
 {
     public class LevelUI : MonoBehaviour
     {
